@@ -13,26 +13,6 @@ Android có 4 thành phần cơ bản cốt lõi (Core Components) cấu thành 
 
 - Content Provider: Quản lý và cung cấp quyền truy cập dữ liệu của ứng dụng cho các ứng dụng khác một cách bảo mật (ví dụ: truy cập danh bạ, thư viện ảnh).
 
-* Code Example: Ví dụ về một Activity cơ bản bằng Kotlin
-  package com.example.myapp
-  import android.os.Bundle
-  import android.widget.Button
-  import android.widget.Toast
-  import androidx.appcompat.app.AppCompatActivity
-
-class MainActivity : AppCompatActivity() {
-override fun onCreate(savedInstanceState: Bundle?) {
-super.onCreate(savedInstanceState)
-setContentView(R.layout.activity_main)
-
-        val btnClick = findViewById<Button>(R.id.btnClickMe)
-        btnClick.setOnClickListener {
-            Toast.makeText(this, "Xin chào Android!", Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
-
 2. Cấu trúc bộ khung của một dự án Android Studio
 
 Khi bạn tạo một project mới dạng Android Project, cấu trúc thư mục chính (Android view) bao gồm các thành phần sau:
@@ -42,10 +22,10 @@ Khi bạn tạo một project mới dạng Android Project, cấu trúc thư m�
 - java (hoặc kotlin + java): Chứa mã nguồn viết bằng Kotlin/Java. Thư mục này chia thành các package chứa Activity, Fragment, ViewModel, Model,...
 
 - res (Resources): Chứa tất cả tài nguyên không phải mã nguồn:
-    * drawable/: Chứa hình ảnh, vector assets, file shape XML.
-    * layout/: Chứa các tệp XML thiết kế giao diện màn hình.
-    * mipmap/: Chứa icon của ứng dụng cho các độ phân giải màn hình khác nhau.
-    * values/: Chứa các tệp cấu hình giá trị như strings.xml (chuỗi văn bản), colors.xml (màu sắc), themes.xml (giao diện).
+  + drawable/: Chứa hình ảnh, vector assets, file shape XML.
+  + layout/: Chứa các tệp XML thiết kế giao diện màn hình.
+  + mipmap/: Chứa icon của ứng dụng cho các độ phân giải màn hình khác nhau.
+  + values/: Chứa các tệp cấu hình giá trị như strings.xml (chuỗi văn bản), colors.xml (màu sắc), themes.xml (giao diện).
 
 - Gradle Scripts: Chứa các file cấu hình xây dựng project (build.gradle.kts hoặc build.gradle), quản lý thư viện bên thứ ba (dependencies), cấu hình phiên bản SDK tối thiểu (minSdk) và mục tiêu (targetSdk).
 
