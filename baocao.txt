@@ -1,0 +1,91 @@
+
+WEEK 2
+
+Chủ đề: Kiến thức cần tìm hiểu về AndroidManifest.xml và cấu trúc file XML trong Android.
+
+1.Tổng quan về AndroidManifest.xml
+
+AndroidManifest.xml là file định nghĩa và kê khai toàn bộ thông tin cốt lõi của một ứng dụng Android cho các công cụ xây dựng (Build Tools), hệ điều hành Android và chợ ứng dụng Google Play.
+Mỗi dự án Android bắt buộc phải có duy nhất một file này nằm ở thư mục gốc của bộ mã nguồn. Nếu thiếu hoặc khai báo sai cấu trúc, ứng dụng không thể biên dịch hoặc sẽ bị hệ điều hành từ chối vận hành.
+
+Vai trò chiến lược của Manifest:
+
+• Định danh ứng dụng: Khai báo cấu trúc tên gói (Package Name) và các thành phần cấu thành cấu trúc logic của app.
+• Quản lý bảo mật & quyền truy cập: Xác định những tài nguyên hệ thống (Camera, GPS, Bộ nhớ, Microphone...) mà ứng dụng được phép dùng, đồng thời hiển thị cảnh báo cấp quyền (Permission) rõ ràng cho người dùng cuối quản lý.
+• Mô tả phần cứng/phần mềm yêu cầu: Khai báo các tính năng thiết bị tối thiểu (ví dụ: máy phải có camera bắt nét tự động) để Google Play lọc thiết bị tương thích khi người dùng tìm kiếm app.
+
+2.Cấu trúc tổng thể của file AndroidManifest.xml
+
+Mã nguồn Manifest được viết bằng ngôn ngữ định dạng XML (eXtensible Markup Language). Cấu trúc của file tuân theo hệ thống phân cấp dạng cây (Tree Structure) bao bọc bởi các cặp thẻ đóng-mở <tag> ... </tag> hoặc thẻ tự đóng <tag />.
+Dưới đây là sơ đồ cấu trúc phân cấp chuẩn của một file Manifest đầy đủ:
+xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+package="com.example.myapp">
+
+    <!-- 1. QUYỀN HẠN VÀ PHẦN CỨNG YÊU CẦU -->
+    <uses-permission android:name="string" />
+    <permission android:name="string" />
+    <uses-feature android:name="string" android:required="true|false" />
+
+    <!-- 2. CẤU HÌNH VÀ CÁC THÀNH PHẦN CORE CỦA ỨNG DỤNG -->
+    <application
+        android:allowBackup="true|false"
+        android:icon="resource"
+        android:label="string"
+        android:supportsRtl="true|false"
+        android:theme="resource">
+
+        <!-- Màn hình giao diện (Activity) -->
+        <activity android:name="string" android:exported="true|false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Tiến trình chạy ngầm (Service) -->
+        <service android:name="string" />
+
+        <!-- Bộ tiếp nhận tín hiệu hệ thống (Broadcast Receiver) -->
+        <receiver android:name="string" />
+
+        <!-- Bộ quản lý chia sẻ dữ liệu (Content Provider) -->
+        <provider android:name="string" />
+
+    </application>
+</manifest>
+
+3.Chi tiết các thẻ thành phần cốt lõi
+
+
+a. Nhóm thẻ cấu hình hệ thống
+
+• <manifest>: Thẻ gốc (Root Element) bắt buộc phải bao bọc toàn bộ file.
+	• Thuộc tính quan trọng: xmlns:android và xmlns:tools định nghĩa không gian tên (Namespace) nhằm kích hoạt các thuộc tính đặc trưng của Android trong file XML.
+• <uses-permission>: Yêu cầu quyền truy cập hệ thống từ thiết bị. Hệ điều hành Android sẽ dựa vào đây để tạo hộp thoại xin quyền trực tiếp từ người dùng (đặc biệt từ Android 6.0 trở lên) khi ứng dụng chạy, chia thành các nhóm rõ ràng (Allowed - Đã cho phép / Not Allowed - Không cho phép) trong phần cài đặt thiết bị.
+• <permission>: Định nghĩa một quyền bảo mật mới do chính ứng dụng của bạn tạo ra nhằm bảo vệ các dữ liệu và mã nguồn trọng yếu, ngăn các ứng dụng khác lạm dụng hoặc xâm nhập bất hợp pháp.
+• <uses-feature>: Khai báo các tính năng phần cứng cụ thể (như android.hardware.camera) mà ứng dụng cần để hoạt động ổn định.
+
+b. Thẻ <application> và các thuộc tính cấu hình app
+
+Thẻ <application> chứa các thuộc tính định cấu hình tổng thể cho ứng dụng hiển thị lên thiết bị của người dùng:
+• android:allowBackup: Bật/Tắt chế độ tự động sao lưu dữ liệu ứng dụng lên tài khoản Google Drive cá nhân của người dùng (tối đa 25MB miễn phí).
+• android:icon: Chỉ định tệp hình ảnh làm biểu tượng đại diện của ứng dụng ngoài màn hình chính (thường nằm ở thư mục tài nguyên mipmap).
+• android:label: Đặt tên hiển thị chính thức của ứng dụng trên thiết bị sau khi cài đặt thành công.
+• android:supportsRtl: Hỗ trợ hiển thị đảo chiều giao diện cho các ngôn ngữ viết từ Phải sang Trái (RTL - Right to Left) của các quốc gia Trung Đông/Ả Rập. Nếu ứng dụng chỉ tập trung ở các thị trường dùng chữ viết từ Trái sang Phải (LTR) như Việt Nam hoặc tiếng Anh, có thể đặt thuộc tính này thành false.
+• android:theme: Thiết lập giao diện, phong cách đồ họa tổng thể cho toàn app.
+
+c. 4 thành phần cốt lõi của Android bên trong <application>
+
+Mọi thành phần chức năng được lập trình viên tạo ra bắt buộc phải đăng ký tại đây, nếu không hệ thống sẽ không nhận diện và gây ra lỗi sập ứng dụng (Crash).
+
+Thành phần	Thẻ khai báo	Chức năng chính
+Activity	<activity>	Đại diện cho một màn hình giao diện tương tác trực tiếp với người dùng. Mỗi ứng dụng cần ít nhất một Activity nền tảng để khởi chạy.
+Service	<service>	Xử lý các tác vụ tốn thời gian chạy hoàn toàn dưới nền, không có giao diện (Ví dụ: Phát nhạc khi tắt màn hình, tải tệp tin ngầm).
+Broadcast Receiver	<receiver>	Lắng nghe và tiếp nhận các thông điệp/tín hiệu phát ra từ hệ thống (Pin yếu, mất mạng Internet) hoặc từ các ứng dụng khác.
+Content Provider	<provider>	Quản lý việc chia sẻ và bảo mật dữ liệu giữa các ứng dụng với nhau (Ví dụ: Ứng dụng Zalo xin dữ liệu từ danh bạ hệ thống máy).
+
+• Lưu ý về <intent-filter>: Nằm bên trong các thành phần trên (đặc biệt là Activity). Nếu chứa thuộc tính bộ lọc hành động MAIN và danh mục LAUNCHER, hệ thống sẽ hiểu đây là "Màn hình mở đầu tiên" (Launcher Activity) khi người dùng nhấn vào icon ứng dụng.
+
