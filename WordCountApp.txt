@@ -1,0 +1,226 @@
+1. Các thành phần cốt lõi trong Android
+Ứng dụng được thiết kế và triển khai dựa trên các thành phần tiêu chuẩn của hệ điều hành Android:
+
+Activity (MainActivity.kt): Đóng vai trò là thành phần giao diện người dùng chính (UI), quản lý vòng đời và tương tác trực tiếp với người dùng.
+
+Service (WordCountService.kt): Cấu hình dưới dạng một Bound Service, chịu trách nhiệm thực thi logic nghiệp vụ (tách chuỗi và đếm từ) độc lập với luồng giao diện chính.
+
+FileProvider & XML Configuration (file_paths.xml): Thành phần thuộc nhóm ContentProvider, cung cấp cơ chế chia sẻ tệp dữ liệu nội bộ an toàn thông qua định danh URI.
+
+2. Chi tiết mã nguồn và giải thích chức năng
+2.1. Cấu hình phân quyền chia sẻ tệp (file_paths.xml)
+Mục đích: Khai báo và giới hạn phạm vi truy cập an toàn cho các thư mục nội bộ (thư mục cache/shared/) nhằm phục vụ cho cơ chế chia sẻ tệp của ứng dụng.
+
+Giải thích chi tiết: Thẻ <cache-path> chỉ định rằng ứng dụng cho phép truy cập vào thư mục bộ nhớ cache nội bộ của nó. Thuộc tính name="shared_notes" định danh đường dẫn này, và path="shared/" giới hạn không gian chia sẻ nằm bên trong thư mục con shared/, giúp ngăn chặn việc truy cập trái phép vào các vùng dữ liệu khác của hệ thống.
+
+Mã nguồn:
+
+XML
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="shared_notes" path="shared/" />
+</paths>
+2.2. Dịch vụ xử lý logic ngầm (WordCountService.kt)
+Mục đích: Triển khai Bound Service cung cấp giao diện IBinder (LocalBinder) cho phép MainActivity kết nối trực tiếp và thực thi phương thức tính toán (countWords) nhằm xử lý chuỗi văn bản đầu vào.
+
+Giải thích chi tiết các thành phần:
+
+inner class LocalBinder: Lớp nội bộ kế thừa từ Binder, cung cấp phương thức getService() để trả về thực thể (instance) hiện tại của WordCountService, giúp Activity gọi được các hàm xử lý bên trong Service sau khi đã bind thành công.
+
+override fun onBind(intent: Intent?): Phương thức bắt buộc của Service, được gọi khi có một component khác (như Activity) yêu cầu kết nối (bindService). Nó trả về đối tượng binder để thiết lập kênh giao tiếp liên tục.
+
+fun countWords(note: String): Int: Hàm xử lý nghiệp vụ chính. Nó kiểm tra chuỗi có trống hay không (isBlank), sau đó dùng biểu thức chính quy (regex = "\\s+.toRegex()" tổng hợp khoảng trắng) để tách chuỗi thành mảng các từ và trả về kích thước mảng (size), qua đó đếm chính xác số lượng từ người dùng nhập.
+
+Mã nguồn:
+
+Kotlin
+package com.example.week1
+
+import android.app.Service
+import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+
+class WordCountService : Service() {
+    private val binder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        fun getService(): WordCountService = this@WordCountService
+    }
+
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
+    }
+
+    fun countWords(note: String): Int {
+        if (note.isBlank()) return 0
+        return note.trim().split(regex = "\\s+".toRegex()).size
+    }
+}
+2.3. Khai báo hệ thống trong tệp cấu hình (AndroidManifest.xml)
+Mục đích: Đăng ký các thành phần ứng dụng (Service, Provider, Activity) với hệ điều hành Android để hệ thống cấp quyền quản lý và thực thi.
+
+Giải thích chi tiết các thành phần:
+
+Thẻ <service>: Đăng ký WordCountService với hệ thống. Thuộc tính android:exported="false" đảm bảo rằng service này là nội bộ, không cho phép các ứng dụng bên ngoài gọi trực tiếp nhằm tăng tính bảo mật.
+
+Thẻ <provider>: Đăng ký FileProvider của thư viện AndroidX (androidx.core.content.FileProvider). Thuộc tính android:authorities tạo định danh duy nhất cho provider. Thẻ con <meta-data> liên kết tệp cấu hình đường dẫn file_paths.xml thông qua android.support.FILE_PROVIDER_PATHS.
+
+Mã nguồn:
+
+XML
+<application
+    android:allowBackup="true"
+    android:dataExtractionRules="@xml/data_extraction_rules"
+    android:fullBackupContent="@xml/backup_rules"
+    android:icon="@mipmap/ic_launcher"
+    android:label="week1"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    android:supportsRtl="true"
+    android:theme="@style/Theme.Week1">
+
+    <service
+        android:name=".WordCountService"
+        android:exported="false" />
+
+    <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="com.example.week1.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/file_paths" />
+    </provider>
+
+    <activity
+        android:name=".MainActivity"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+</application>
+2.4. Giao diện và điều khiển chính (MainActivity.kt)
+Mục đích: Quản lý kết nối (ServiceConnection) đến WordCountService qua các phương thức vòng đời (onStart, onStop), đồng thời xây dựng giao diện người dùng bằng Jetpack Compose để nhận dữ liệu đầu vào và hiển thị kết quả xử lý.
+
+Giải thích chi tiết các thành phần:
+
+private val connection = object : ServiceConnection: Đối tượng quản lý trạng thái kết nối. Khi kết nối thành công (onServiceConnected), nó ép kiểu service nhận được thành WordCountService.LocalBinder để lấy ra instance của service và gán cờ isBound = true. Khi ngắt kết nối (onServiceDisconnected), nó dọn dẹp biến tham chiếu để tránh rò rỉ bộ nhớ.
+
+override fun onStart() / onStop(): Các hàm quản lý vòng đời Activity. onStart() tiến hành gọi bindService() để gắn kết với Service, và onStop() gọi unbindService() để giải phóng tài nguyên khi Activity không còn hiển thị trước mắt người dùng.
+
+WordCountScreen(...): Hàm Composable dựng giao diện hiện đại gồm ô nhập liệu OutlinedTextField và thẻ Text hiển thị kết quả. Khi người dùng nhập văn bản, sự kiện onValueChange kích hoạt gọi hàm đếm từ từ Service theo thời gian thực và cập nhật trạng thái hiển thị.
+
+Mã nguồn:
+
+Kotlin
+package com.example.week1
+
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Bundle
+import android.os.IBinder
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.week1.ui.theme.Week1Theme
+
+class MainActivity : ComponentActivity() {
+
+    private var wordCountService: WordCountService? = null
+    private var isBound = false
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as WordCountService.LocalBinder
+            wordCountService = binder.getService()
+            isBound = true
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            isBound = false
+            wordCountService = null
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            Week1Theme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    WordCountScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        onCountWords = { text ->
+                            if (isBound && wordCountService != null) {
+                                wordCountService!!.countWords(text)
+                            } else {
+                                0
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Intent(this, WordCountService::class.java).also { intent ->
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (isBound) {
+            unbindService(connection)
+            isBound = false
+        }
+    }
+}
+
+@Composable
+fun WordCountScreen(modifier: Modifier = Modifier, onCountWords: (String) -> Int) {
+    var textInput by remember { mutableStateOf("") }
+    var wordCount by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Ứng Dụng Đếm Số Từ", style = MaterialTheme.typography.titleLarge)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = textInput,
+            onValueChange = {
+                textInput = it
+                wordCount = onCountWords(it)
+            },
+            label = { Text("Nhập nội dung vào đây...") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Số từ: $wordCount",
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
